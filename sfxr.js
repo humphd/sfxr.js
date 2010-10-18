@@ -436,6 +436,15 @@
     };
     var play = this.play;
 
+    this.updateBuffer = function() {
+      reset(true);
+
+      var length = _envelopeFullLength ? Math.floor(_envelopeFullLength) : 3072;
+      this.audioBuffer = new Float32Array(length);
+      synthWave(this.audioBuffer, this.audioBuffer.length, true);
+      return this.audioBuffer;
+    };
+
     /**
      * Plays a mutation of the sound, synthesizing the sound as it plays
      * @param	mutation	Amount of mutation
@@ -1104,6 +1113,17 @@
     var copyFrom = this.copyFrom;
   };
 
+  sfxr.createEffect = function(settings) {
+   var synth = new sfxr.Synth();
+   synth.setSettingsString(settings);
+   var buffer = synth.updateBuffer();
+   return { 
+    play: function() {
+      var audioSource = new AudioDataMemorySource(audioParameters, buffer);
+      globalMixer.addInputSource(audioSource);
+    }
+   };   
+  };
 
   /***********************************************************************************
    * Audio Data API Objects
@@ -1185,7 +1205,7 @@
    * Disabled by default.
    * @type boolean
    */
-  AudioDataDestination.prototype.autoLatency = false;
+  AudioDataDestination.prototype.autoLatency = true;
 
   /**
    * Gets or sets latency mode for {@link #writeAsync}. The latency is set
