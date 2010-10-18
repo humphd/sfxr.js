@@ -1,0 +1,239 @@
+<html>
+<head>
+<title>sfxr.js</title>
+<script src="sfxr.js"></script>
+<script src="processing.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+<link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
+<style type="text/css">
+  .slider {
+    margin:5px;
+  }
+
+  #sliders{
+    margin-top:5px;
+    width:400px;
+    background-color:#eee;
+    padding:10px;
+  }
+</style>
+</head>
+<body>
+
+<h1>sfxr.js</h1>
+
+<p>This is sfxr.js, a sound effects generator for video games.  The code was originally <a href="http://www.drpetter.se/project_sfxr.html">http://www.drpetter.se/project_sfxr.html</a> and was ported to JavaScript using the <a href="https://wiki.mozilla.org/Audio_Data_API">Audio Data API</a> for <a href="http://www.mozilla.com/en-US/firefox/beta/">Firefox 4</a>.  The UI is just a quick hack, and if you'd like to make it look better, we'd be happy for the patch!</p>
+
+<p>You can choose a predefined sound below, then play it, mutate it (change it just a bit), or generate a .wav file from it.  You can also alter the various aspects of the sound using the advanced settings below.  The current sound will be "saved" on the URL as a string in the form sound=..., and you can share this or bookmark it for later.</p>
+
+<div>
+  <h4>Manipulate Current Effect:<h4>
+  <button onclick="generate();">Play</button>&nbsp;
+  <button onclick="generate(sfxr.mutate);">Mutate Slightly</button>&nbsp;
+  <button onclick="generateWave();">Generate .wav</button>
+</div>
+<div id="wav" style="margin-top:10px"><div id="wav-audio"></div><div style="margin-top:5px" id="wav-uri"></div></div>
+
+<div>
+<script target="#signal" type="application/processing">
+  // Draw synth signal with Processing.js
+  void setup() {
+    size(innerWidth - 40, 100);
+    stroke(0);
+    strokeWeight(1);
+    noLoop();
+  }
+
+  void draw() {
+    background(230, 217, 255);
+
+    var signal = _synth.audioBuffer;
+
+    if (!signal) return;
+    int lastY = height * 0.5;
+    for (int i = 0; i < width; i++) {
+      int currentY = height * 0.5 * (1 + signal[i]);
+      line(i - 1, lastY, i, currentY);
+      lastY = currentY;
+    }
+  }
+</script>
+
+<h4>Current Effect Visualization</h4>
+<canvas id="signal" style="border: solid 1px black"></canvas>
+</div>
+
+<div>
+<div>
+  <h4>Predefined Effects:</h4>
+  <button onclick="generate(sfxr.randomize);">Random</button>&nbsp;
+  <button onclick="generate(sfxr.generateBlipSelect);">Blip Select</button>&nbsp;
+  <button onclick="generate(sfxr.generateExplosion);">Explosion</button>&nbsp;
+  <button onclick="generate(sfxr.generateHitHurt);">Hit Hurt</button>&nbsp;
+  <button onclick="generate(sfxr.generateJump);">Jump</button>&nbsp;
+  <button onclick="generate(sfxr.generateLaserShoot);">Laser Shoot</button>&nbsp;
+  <button onclick="generate(sfxr.generatePickupCoin);">Pickup Coin</button>&nbsp;
+  <button onclick="generate(sfxr.generatePowerup);">Powerup</button>&nbsp;
+</div>
+<div id="wave-type">
+  <h4>Chooose New Wave Type for Current Effect:</h4>
+  <input type="radio" name="waveType" id="waveType0" value="0" onchange="alterWaveType(0)">Square&nbsp;
+  <input type="radio" name="waveType" id="waveType1" value="1" onchange="alterWaveType(1)">Saw&nbsp;
+  <input type="radio" name="waveType" id="waveType2" value="2" onchange="alterWaveType(2)">Sine&nbsp;
+  <input type="radio" name="waveType" id="waveType3" value="3" onchange="alterWaveType(3)">Noise
+</div>
+
+<h4>Advanced Settings for Current Effect:</h4>
+<div id="sliders">
+Attack Time: <span id="attackTimeLabel"></span> <div class="slider" id="attackTimeSlider"></div>
+Sustain Time: <span id="sustainTimeLabel"></span> <div class="slider" id="sustainTimeSlider"></div>
+Sustain Punch: <span id="sustainPunchLable"></span> <div class="slider" id="sustainPunchSlider"></div>
+Decay Time: <span id="decayTimeLabel"></span> <div class="slider" id="decayTimeSlider"></div>
+
+Start Frequency: <span id="startFrequencyLabel"></span> <div class="slider" id="startFrequencySlider"></div>
+Min Frequency: <span id="minFrequencyLabel"></span> <div class="slider" id="minFrequencySlider"></div>
+Slide: <span id="slideLabel"></span> <div class="slider" id="slideSlider"></div>
+Delta Slide: <span id="deltaSlideLabel"></span> <div class="slider" id="deltaSlideSlider"></div>
+Vibrato Depth: <span id="vibratoDepthLabel"></span> <div class="slider" id="vibratoDepthSlider"></div>
+Vibrato Speed: <span id="vibratoSpeedLabel"></span> <div class="slider" id="vibratoSpeedSlider"></div>
+
+Change Amount: <span id="changeAmountLabel"></span> <div class="slider" id="changeAmountSlider"></div>
+Change Speed: <span id="changeSpeedLabel"></span> <div class="slider" id="changeSpeedSlider"></div>
+
+Square Duty: <span id="squareDutyLabel"></span> <div class="slider" id="squareDutySlider"></div>
+Duty Sweep: <span id="dutySweepLabel"></span> <div class="slider" id="dutySweepSlider"></div>
+
+Repeat Speed: <span id="repeatSpeedLabel"></span> <div class="slider" id="repeatSpeedSlider"></div>
+
+Phaser Offset: <span id="phaserOffsetLabel"></span> <div class="slider" id="phaserOffsetSlider"></div>
+Phaser Sweep: <span id="phaserSweepLabel"></span> <div class="slider" id="phaserSweepSlider"></div>
+
+LP Filter Cutoff: <span id="lpFilterCutoffLabel"></span> <div class="slider" id="lpFilterCutoffSlider"></div>
+LP Filter Cutoff Sweep: <span id="lpFilterCutoffSweepLabel"></span> <div class="slider" id="lpFilterCutoffSweepSlider"></div>
+LP Filter Resonance: <span id="lpFilterResonanceLabel"></span> <div class="slider" id="lpFilterResonanceSlider"></div>
+HP Filter Cutoff: <span id="hpFilterCutoffLabel"></span> <div class="slider" id="hpFilterCutoffSlider"></div>
+HP Filter Cutoff Sweep: <span id="hpFilterCutoffSweepLabel"></span> <div class="slider" id="hpFilterCutoffSweepSlider"></div>
+
+Master Volume: <span id="masterVolumeLabel"></span> <div class="slider" id="masterVolumeSlider"></div>
+</div>
+
+<script type="application/javascript">
+  var _synth = new sfxr.Synth();
+  var _processing;
+  var _wavAudio;
+  var _synthPropNames = ['attackTime', 'sustainTime', 'sustainPunch', 'decayTime', 'startFrequency',
+                         'minFrequency', 'slide', 'deltaSlide', 'vibratoDepth', 'vibratoSpeed',
+                         'changeAmount', 'changeSpeed', 'squareDuty', 'dutySweep', 'repeatSpeed',
+                         'phaserOffset', 'phaserSweep', 'lpFilterCutoff', 'lpFilterCutoffSweep',
+                         'lpFilterResonance', 'hpFilterCutoff', 'hpFilterCutoffSweep', 'masterVolume'];
+
+  function updateUI(showInURL) {
+    for (var i = 0; i < _synthPropNames.length; i++) {
+      var name = _synthPropNames[i];
+      $('#' + name + 'Label').html(_synth[name]);
+      $('#' + name + 'Slider').slider('value', _synth[name]);
+    }
+
+    $('#waveType' + _synth.waveType).attr('checked', true);
+
+    if (showInURL) {
+      location.hash = "sound=" + _synth.getSettingsString();
+    }
+  }
+
+  function generate(generateFunc) {
+    if (generateFunc) {
+      generateFunc(_synth);
+    }
+    _synth.play();
+    _processing.draw();
+    updateUI(true);
+  }
+
+  function alterWaveType(type) {
+    _synth.waveType = type;
+    generate(function(){});
+  }
+
+  function generateWave() {
+    var wavURI = _synth.getWaveURI();
+    document.getElementById('wav-uri').innerHTML = '<a href="' + wavURI + '">Click here to Download .wav file</a>';
+
+    if (_wavAudio) {
+      _wavAudio.parentNode.removeChild(_wavAudio);
+    }
+    _wavAudio = new Audio();
+    _wavAudio.src = wavURI;
+    _wavAudio.width = 400;
+    _wavAudio.controls = true;
+    document.getElementById('wav-audio').appendChild(_wavAudio);
+  }
+
+  function initProcessing() {
+    // Init in-line Processing sketch
+    var scripts = document.getElementsByTagName("script");
+
+    for ( var i = 0; i < scripts.length; i++ ) {
+      if ( scripts[i].type == "application/processing" ) {
+        var src = scripts[i].getAttribute("target");
+        var canvas = scripts[i].nextSibling;
+
+        if ( src && src.indexOf("#") > -1 ) {
+          canvas = document.getElementById( src.substr( src.indexOf("#") + 1 ) );
+        } else {
+          while ( canvas && canvas.nodeName.toUpperCase() != "CANVAS" ) {
+            canvas = canvas.nextSibling;
+          }
+        }
+
+        if ( canvas ) {
+          _processing = new Processing(canvas, scripts[i].text);
+        }
+      }
+    }
+  }
+
+  function initSliders() {
+    for (var i = 0; i < _synthPropNames.length; i++) {
+      var name = _synthPropNames[i];
+      var minVal = 0;
+      if (name == 'slide' || name == 'deltaSlide' || name == 'changeAmount' || name == 'dutySweep' ||
+          name == 'phaserOffset' || name == 'phaserSweep' || name == 'lpFilterCutoffSweep' ||
+          name == 'hpFilterCutoffSweep') {
+        minVal = -1;
+      }
+
+      $("#" + name + "Label").html(_synth[name]);
+      $("#" + name + "Slider").slider({ min: minVal, max: 1, step: 0.00000001, value: _synth[name] });
+      $("#" + name + "Slider").bind("slide", (function(aName) {
+        var name = aName;
+        return function(event, ui) {
+          $("#" + name + "Label").html(ui.value);
+          _synth[name] = ui.value;
+          generate();
+        };
+      })(name));
+    }
+  }
+
+  function init() {
+    initProcessing();
+    initSliders();
+
+    // Recreate the sound from the URL if ?sound= is specified.
+    if (/#sound/(location.hash)) {
+      _synth.setSettingsString(/#sound=.+/(location.hash)[0].split('=')[1]);
+      generate();
+    } else {
+      sfxr.randomize(_synth);
+      updateUI(false);
+    }
+  }
+
+  // Trigger ready event when DOM is loaded
+  addEventListener('DOMContentLoaded', function(){init();}, false);
+</script>
+</div>
+</body>
+</html>
