@@ -1117,12 +1117,12 @@
    var synth = new sfxr.Synth();
    synth.setSettingsString(settings);
    var buffer = synth.updateBuffer();
-   return { 
+   return {
     play: function() {
       var audioSource = new AudioDataMemorySource(audioParameters, buffer);
       globalMixer.addInputSource(audioSource);
     }
-   };   
+   };
   };
 
   /***********************************************************************************
