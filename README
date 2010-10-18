@@ -1,0 +1,14 @@
+  SFXR.JS
+  a JavaScript port of the SFXR sound effects application for the Firefox 4
+  Audio Data API.
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  License           MIT (see included LICENSE)
+  Original Authors  David Humphrey <david.humphrey@senecac.on.ca>
+
+  Original Post     http://vocamus.net/dave/?p=1166
+  Demo Site         http://audioscene.org/scene-files/humph/sfxr/
+  Github Repo       http://github.com/humphd/sfxr.js
+
+  //////////////////////////////////////////////////////////////////////////////
