@@ -222,8 +222,8 @@ Master Volume: <span id="masterVolumeLabel"></span> <div class="slider" id="mast
     initSliders();
 
     // Recreate the sound from the URL if ?sound= is specified.
-    if (/#sound/(location.hash)) {
-      _synth.setSettingsString(/#sound=.+/(location.hash)[0].split('=')[1]);
+    if (/#sound/.exec(location.hash)) {
+      _synth.setSettingsString(/#sound=.+/.exec(location.hash)[0].split('=')[1]);
       generate();
     } else {
       sfxr.randomize(_synth);
